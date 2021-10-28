@@ -10,7 +10,7 @@ fn create_project(filename: &String) -> std::io::Result<()> {
     fs::create_dir_all(filename.to_string() + "/" + "src")
         .expect(&Colour::Red.paint("Sub-Folder creation failed.").to_string());
 
-    File::create(PathBuf::from(filename.to_string() + "/" + "src").join("index.js")).ok();
+    File::create(PathBuf::from(filename.to_string() + "/" + "src").join("index.ic")).ok();
     let file_path = PathBuf::from(filename.to_string()).join("index.html");
 
     let mut file = File::create(file_path).expect("File creation failed.");
