@@ -1,9 +1,12 @@
+mod compiler;
+
 use ansi_term::Colour;
 use std::env;
 use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
+use crate::compiler::compile_project;
 
 fn create_project(filename: &String) -> std::io::Result<()> {
     fs::create_dir_all(filename.to_string()).expect("Folder creation failed");
@@ -26,5 +29,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     if &args[1] == "create" && args[2] != "" {
         create_project(&args[2]).ok();
+    } else if &args[1] == "compile" && args[2] == "prod" && args[3]!="" {
+        println!("{:?}",compile_project(&args[3])) ;
     }
 }
