@@ -43,7 +43,7 @@ pub fn compile_project(project_name: &String)->String{
 
                  let mut sub_root_write_element =String::new();
 
-                 if proxy_data[0]=="p" || proxy_data[0]=="h1" || proxy_data[0]=="h2" || proxy_data[0]=="h3" ||proxy_data[0]=="h4" ||proxy_data[0]=="h5"{
+                 if proxy_data[0]=="p" || proxy_data[0]=="h1" || proxy_data[0]=="h2" || proxy_data[0]=="h3" ||proxy_data[0]=="h4" ||proxy_data[0]=="h5" {
 
                      printed_js_data += &format!("let writeElement{} = document.createElement('{}');",&element_serializer,&proxy_data[0]);
 
@@ -87,11 +87,34 @@ pub fn compile_project(project_name: &String)->String{
                                  calc_bound = false;
                              }
                          }
-
-                         println!("{}",&& proxy_data[3]);
+                         // println!("{}",&& proxy_data[3]);
                      }
                  }
              }
+
+            //this part deals with functions
+            else if line_data.contains("()") {
+                let proxy_data:Vec<&str> = line_data.split_whitespace().collect();
+                let mut sub_function = String::new();
+                //subfunctions
+                if proxy_data[4]=="alert" {
+                    let mut alert_text = String::new();
+                    'subfunction : for alert_index in 6..proxy_data.len() {
+                        if proxy_data[alert_index]=="<-()" {break 'subfunction};
+                        alert_text+= proxy_data[alert_index];
+                        alert_text+=" ";
+                    }
+                    sub_function = format!("window.alert({})",&alert_text);
+                }
+
+                //main functions
+                if proxy_data[0]=="click" || proxy_data[0]=="mouseenter" || proxy_data[0]=="mouseleave" && proxy_data[4]!=""{
+                    printed_js_data += &format!("document.getElementById({}).addEventListener('{}',()=>{});",&proxy_data[2],&proxy_data[0],&sub_function);
+                    if proxy_data[proxy_data.len()-1]=="<-()" {
+                        printed_js_data += &format!("document.getElementById({}).removeEventListener('{}',()=>{})",&proxy_data[2],&proxy_data[0],&sub_function);
+                    }
+                }
+            }
              printed_js_data+=";";
              element_serializer += 1;
          }
