@@ -29,8 +29,9 @@ style >> custom "buttonColor" = color : red -> fontSize : 2rem -> background : y
 style >> custom "header" = color : red -> background : green -> textDecoration : underline -> cursor :  pointer
 mouseenter () "header" => alert => "This will pop up." <-()
 mouseleave () "header" => alert => "This mouse is leaving." <-()
+```
 
-## Building 
+## Building
 ```bash
 cargo run compile prod forms_creator 
 ```
@@ -50,7 +51,7 @@ writeElement2.appendChild(document.createTextNode("This is the second tag"));
 root.appendChild(writeElement2);
 let writeElement3 = document.createElement("p");
 writeElement3.appendChild(
-  document.createTextNode("This compiler is pretty amazing")
+    document.createTextNode("This compiler is pretty amazing")
 );
 root.appendChild(writeElement3);
 document.getElementById("buttonColor").style.color = "red";
@@ -62,19 +63,19 @@ document.getElementById("header").style.background = "green";
 document.getElementById("header").style.textDecoration = "underline";
 document.getElementById("header").style.cursor = "pointer";
 document
-  .getElementById("header")
-  .addEventListener("mouseenter", () => window.alert("This will pop up."));
+    .getElementById("header")
+    .addEventListener("mouseenter", () => window.alert("This will pop up."));
 document
-  .getElementById("header")
-  .removeEventListener("mouseenter", () => window.alert("This will pop up."));
+    .getElementById("header")
+    .removeEventListener("mouseenter", () => window.alert("This will pop up."));
 document
-  .getElementById("header")
-  .addEventListener("mouseleave", () => window.alert("This mouse is leaving."));
+    .getElementById("header")
+    .addEventListener("mouseleave", () => window.alert("This mouse is leaving."));
 document
-  .getElementById("header")
-  .removeEventListener("mouseleave", () =>
-    window.alert("This mouse is leaving.")
-  );
+    .getElementById("header")
+    .removeEventListener("mouseleave", () =>
+        window.alert("This mouse is leaving.")
+    );
 
 ```
 
