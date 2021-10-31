@@ -18,6 +18,9 @@ pub fn compile_project(project_name: &String)->String{
          let contents = fs::read_to_string(format!("{}{}",&comp_project_path,"/index.ic")).expect("Error reading the file.");
          let line_content:Vec<&str> = contents.split("\n").collect();
          let mut printed_js_data = String::from("//compiled with Insane-Compiler by github@alwinsDen;\n");
+
+         let mut element_serializer = 0;
+
          for line_data in line_content.iter() {
 
              let mut root_element = String::new();
@@ -39,7 +42,7 @@ pub fn compile_project(project_name: &String)->String{
 
                  if proxy_data[0]=="p" || proxy_data[0]=="h1" || proxy_data[0]=="h2" {
 
-                     sub_root_write_element = format!("document.createElement('{}')",&proxy_data[0]).to_string();
+                     printed_js_data += &format!("let writeElement{} = document.createElement('{}');",&element_serializer,&proxy_data[0]);
 
                      let mut proxy_text_data = String::new();
 
@@ -50,10 +53,12 @@ pub fn compile_project(project_name: &String)->String{
                          proxy_text_data += " ";
 
                      }
-                     printed_js_data += &format!("root.appendChild({}.appendChild(document.createTextNode({})))",&sub_root_write_element,&proxy_text_data);
+                     printed_js_data += &format!("writeElement{}.appendChild(document.createTextNode({}));",element_serializer,&proxy_text_data);
+                     printed_js_data += &format!("root.appendChild(writeElement{})",element_serializer);
                  }
              }
              printed_js_data+=";";
+             element_serializer += 1;
          }
         //build file creation
         let file_path = PathBuf::from(project_name.to_string()).join("build.js");
