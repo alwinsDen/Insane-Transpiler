@@ -5,7 +5,6 @@ use std::path::Path;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use std::ptr::null;
 
 pub fn compile_project(project_name: &String)->String{
     let path_loc = env::current_dir().expect("Getting path failed");
@@ -22,17 +21,19 @@ pub fn compile_project(project_name: &String)->String{
 
          let mut element_serializer = 0;
 
-         let mut currentElementVar = String::new();
+         // let mut current_element_var = String::new();
 
-        for line_data in line_content.iter() {
-
+        'ic_mapper: for line_data in line_content.iter() {
+             if line_data.starts_with("//") {
+                 continue 'ic_mapper;
+             }
              let mut root_element = String::new();
              //root element manipulation
              if line_data.starts_with("#") {
                  let proxy_data:Vec<&str> = line_data.split("#").collect();
 
                  root_element =  format!("let {}=document.getElementById('{}')",proxy_data[1],proxy_data[1]);
-                 currentElementVar = proxy_data[1].to_string();
+                 // current_element_var = proxy_data[1].to_string();
 
                  printed_js_data += &root_element;
              }
@@ -41,9 +42,9 @@ pub fn compile_project(project_name: &String)->String{
              else if line_data.contains(">>") {
                  let proxy_data:Vec<&str> = line_data.split_whitespace().collect();
 
-                 let mut sub_root_write_element =String::new();
+                 let _sub_root_write_element =String::new();
 
-                 if proxy_data[0]=="p" || proxy_data[0]=="h1" || proxy_data[0]=="h2" || proxy_data[0]=="h3" ||proxy_data[0]=="h4" ||proxy_data[0]=="h5" {
+                 if proxy_data[0]=="p" || proxy_data[0]=="h1" || proxy_data[0]=="h2" || proxy_data[0]=="h3" ||proxy_data[0]=="h4" ||proxy_data[0]=="h5"{
 
                      printed_js_data += &format!("let writeElement{} = document.createElement('{}');",&element_serializer,&proxy_data[0]);
 
@@ -51,7 +52,7 @@ pub fn compile_project(project_name: &String)->String{
 
                      'text_looper : for text_data in 2..proxy_data.len() {
                          if proxy_data[text_data] == "||" {
-                             let mut custom_id_tag = String::from(proxy_data[text_data+1]);
+                             let custom_id_tag = String::from(proxy_data[text_data+1]);
                              if custom_id_tag!="" {
                                  printed_js_data +=  &format!("writeElement{}.id={};",&element_serializer,&custom_id_tag);
                                  break 'text_looper;
@@ -62,8 +63,27 @@ pub fn compile_project(project_name: &String)->String{
                          proxy_text_data += " ";
 
                      }
-                     printed_js_data += &format!("writeElement{}.appendChild(document.createTextNode({}));",element_serializer,&proxy_text_data);
-                     printed_js_data += &format!("root.appendChild(writeElement{})",element_serializer);
+                     printed_js_data += &format!("writeElement{}.appendChild(document.createTextNode({}));",&element_serializer,&proxy_text_data);
+                     printed_js_data += &format!("root.appendChild(writeElement{})",&element_serializer);
+                 }
+                     //buttons and other input elements
+                 else if proxy_data[0]=="button" {
+                     printed_js_data += &format!("let inputElement{} = document.createElement('{}');",&element_serializer,&proxy_data[0]);
+                     let mut proxy_text_data = String::new();
+                     'input_looper : for text_data in 2..proxy_data.len() {
+                         if proxy_data[text_data] == "||" {
+                             let custom_id_tag = String::from(proxy_data[text_data+1]);
+                             if custom_id_tag!="" {
+                                 printed_js_data +=  &format!("inputElement{}.id={};",&element_serializer,&custom_id_tag);
+                                 break 'input_looper;
+                             }
+                         };
+                         proxy_text_data += proxy_data[text_data];
+
+                         proxy_text_data += " ";
+                     }
+                     printed_js_data += &format!("inputElement{}.appendChild(document.createTextNode({}));",&element_serializer,&proxy_text_data);
+                     printed_js_data += &format!("root.appendChild(inputElement{})",&element_serializer);
                  }
 
                  else if proxy_data[0]=="style" {
@@ -96,7 +116,7 @@ pub fn compile_project(project_name: &String)->String{
             else if line_data.contains("()") {
                 let proxy_data:Vec<&str> = line_data.split_whitespace().collect();
                 let mut sub_function = String::new();
-                //subfunctions
+                //sub functions
                 if proxy_data[4]=="alert" {
                     let mut alert_text = String::new();
                     'subfunction : for alert_index in 6..proxy_data.len() {
@@ -110,12 +130,17 @@ pub fn compile_project(project_name: &String)->String{
                 //main functions
                 if proxy_data[0]=="click" || proxy_data[0]=="mouseenter" || proxy_data[0]=="mouseleave" && proxy_data[4]!=""{
                     printed_js_data += &format!("document.getElementById({}).addEventListener('{}',()=>{});",&proxy_data[2],&proxy_data[0],&sub_function);
-                    if proxy_data[proxy_data.len()-1]=="<-()" {
-                        printed_js_data += &format!("document.getElementById({}).removeEventListener('{}',()=>{})",&proxy_data[2],&proxy_data[0],&sub_function);
+                    if proxy_data[proxy_data.len()-2]=="<-()" || proxy_data[proxy_data.len()-1]=="<-()"{
+                        printed_js_data += &format!("document.getElementById({}).removeEventListener('{}',()=>{});",&proxy_data[2],&proxy_data[0],&sub_function);
+                    }
+                    if proxy_data[proxy_data.len()-1]=="LOGGER" {
+                        printed_js_data += &format!("document.getElementById({}).addEventListener('{}',()=>console.log({}+' was clicked'));",&proxy_data[2],&proxy_data[0],&proxy_data[2]);
                     }
                 }
             }
-             printed_js_data+=";";
+            if line_data!=&"" {
+                printed_js_data+=";";
+            }
              element_serializer += 1;
          }
         //build file creation
