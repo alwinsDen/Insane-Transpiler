@@ -5,6 +5,7 @@ use std::path::Path;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::ptr::null;
 
 pub fn compile_project(project_name: &String)->String{
     let path_loc = env::current_dir().expect("Getting path failed");
@@ -42,14 +43,20 @@ pub fn compile_project(project_name: &String)->String{
 
                  let mut sub_root_write_element =String::new();
 
-                 if proxy_data[0]=="p" || proxy_data[0]=="h1" || proxy_data[0]=="h2" {
+                 if proxy_data[0]=="p" || proxy_data[0]=="h1" || proxy_data[0]=="h2" || proxy_data[0]=="h3" ||proxy_data[0]=="h4" ||proxy_data[0]=="h5"{
 
                      printed_js_data += &format!("let writeElement{} = document.createElement('{}');",&element_serializer,&proxy_data[0]);
 
                      let mut proxy_text_data = String::new();
 
-                     for text_data in 2..proxy_data.len() {
-
+                     'text_looper : for text_data in 2..proxy_data.len() {
+                         if proxy_data[text_data] == "||" {
+                             let mut custom_id_tag = String::from(proxy_data[text_data+1]);
+                             if custom_id_tag!="" {
+                                 printed_js_data +=  &format!("writeElement{}.id={};",&element_serializer,&custom_id_tag);
+                                 break 'text_looper;
+                             }
+                         };
                          proxy_text_data += proxy_data[text_data];
 
                          proxy_text_data += " ";
@@ -60,13 +67,28 @@ pub fn compile_project(project_name: &String)->String{
                  }
 
                  else if proxy_data[0]=="style" {
-                     if proxy_data[2]=="default" {
+                     if proxy_data[2]=="default"{
                          printed_js_data += &format!("\
                          let allElements=document.querySelectorAll('*');\
                          for (let i=0;i<allElements.length;i++){{\
                          allElements[i].style.margin='0';\
                          allElements[i].style.padding='0';\
                          allElements[i].style.boxSizing='border-box'}}");
+                     }
+                     else if proxy_data[2]=="custom" && proxy_data[3]!="" {
+                         let mut calc_bound = true;
+                         'style_loop:for data_range in 5..proxy_data.len() {
+                             if proxy_data[data_range]=="->" {calc_bound=true;continue 'style_loop;}
+                             else if proxy_data[data_range]==":" || calc_bound ==false {
+                                 continue 'style_loop;
+                             }
+                             if calc_bound {
+                                 printed_js_data += &format!("document.getElementById({}).style.{}='{}';",proxy_data[3],proxy_data[data_range],proxy_data[data_range+2]);
+                                 calc_bound = false;
+                             }
+                         }
+
+                         println!("{}",&& proxy_data[3]);
                      }
                  }
              }
