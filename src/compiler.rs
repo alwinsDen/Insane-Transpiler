@@ -21,15 +21,17 @@ pub fn compile_project(project_name: &String)->String{
 
          let mut element_serializer = 0;
 
-         for line_data in line_content.iter() {
+         let mut currentElementVar = String::new();
+
+        for line_data in line_content.iter() {
 
              let mut root_element = String::new();
-
              //root element manipulation
              if line_data.starts_with("#") {
                  let proxy_data:Vec<&str> = line_data.split("#").collect();
 
-                 root_element =  format!("let root=document.getElementById('{}')",proxy_data[1]);
+                 root_element =  format!("let {}=document.getElementById('{}')",proxy_data[1],proxy_data[1]);
+                 currentElementVar = proxy_data[1].to_string();
 
                  printed_js_data += &root_element;
              }
@@ -55,6 +57,17 @@ pub fn compile_project(project_name: &String)->String{
                      }
                      printed_js_data += &format!("writeElement{}.appendChild(document.createTextNode({}));",element_serializer,&proxy_text_data);
                      printed_js_data += &format!("root.appendChild(writeElement{})",element_serializer);
+                 }
+
+                 else if proxy_data[0]=="style" {
+                     if proxy_data[2]=="default" {
+                         printed_js_data += &format!("\
+                         let allElements=document.querySelectorAll('*');\
+                         for (let i=0;i<allElements.length;i++){{\
+                         allElements[i].style.margin='0';\
+                         allElements[i].style.padding='0';\
+                         allElements[i].style.boxSizing='border-box'}}");
+                     }
                  }
              }
              printed_js_data+=";";
