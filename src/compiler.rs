@@ -5,6 +5,7 @@ use std::path::Path;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::ptr::null;
 
 pub fn compile_project(project_name: &String)->String{
     let path_loc = env::current_dir().expect("Getting path failed");
@@ -18,15 +19,20 @@ pub fn compile_project(project_name: &String)->String{
          let contents = fs::read_to_string(format!("{}{}",&comp_project_path,"/index.ic")).expect("Error reading the file.");
          let line_content:Vec<&str> = contents.split("\n").collect();
          let mut printed_js_data = String::from("//compiled with Insane-Compiler by github@alwinsDen;\n");
-         for line_data in line_content.iter() {
+
+         let mut element_serializer = 0;
+
+         let mut currentElementVar = String::new();
+
+        for line_data in line_content.iter() {
 
              let mut root_element = String::new();
-
              //root element manipulation
              if line_data.starts_with("#") {
                  let proxy_data:Vec<&str> = line_data.split("#").collect();
 
-                 root_element =  format!("let root=document.getElementById('{}')",proxy_data[1]);
+                 root_element =  format!("let {}=document.getElementById('{}')",proxy_data[1],proxy_data[1]);
+                 currentElementVar = proxy_data[1].to_string();
 
                  printed_js_data += &root_element;
              }
@@ -37,23 +43,57 @@ pub fn compile_project(project_name: &String)->String{
 
                  let mut sub_root_write_element =String::new();
 
-                 if proxy_data[0]=="p" || proxy_data[0]=="h1" || proxy_data[0]=="h2" {
+                 if proxy_data[0]=="p" || proxy_data[0]=="h1" || proxy_data[0]=="h2" || proxy_data[0]=="h3" ||proxy_data[0]=="h4" ||proxy_data[0]=="h5"{
 
-                     sub_root_write_element = format!("document.createElement('{}')",&proxy_data[0]).to_string();
+                     printed_js_data += &format!("let writeElement{} = document.createElement('{}');",&element_serializer,&proxy_data[0]);
 
                      let mut proxy_text_data = String::new();
 
-                     for text_data in 2..proxy_data.len() {
-
+                     'text_looper : for text_data in 2..proxy_data.len() {
+                         if proxy_data[text_data] == "||" {
+                             let mut custom_id_tag = String::from(proxy_data[text_data+1]);
+                             if custom_id_tag!="" {
+                                 printed_js_data +=  &format!("writeElement{}.id={};",&element_serializer,&custom_id_tag);
+                                 break 'text_looper;
+                             }
+                         };
                          proxy_text_data += proxy_data[text_data];
 
                          proxy_text_data += " ";
 
                      }
-                     printed_js_data += &format!("root.appendChild({}.appendChild(document.createTextNode({})))",&sub_root_write_element,&proxy_text_data);
+                     printed_js_data += &format!("writeElement{}.appendChild(document.createTextNode({}));",element_serializer,&proxy_text_data);
+                     printed_js_data += &format!("root.appendChild(writeElement{})",element_serializer);
+                 }
+
+                 else if proxy_data[0]=="style" {
+                     if proxy_data[2]=="default"{
+                         printed_js_data += &format!("\
+                         let allElements=document.querySelectorAll('*');\
+                         for (let i=0;i<allElements.length;i++){{\
+                         allElements[i].style.margin='0';\
+                         allElements[i].style.padding='0';\
+                         allElements[i].style.boxSizing='border-box'}}");
+                     }
+                     else if proxy_data[2]=="custom" && proxy_data[3]!="" {
+                         let mut calc_bound = true;
+                         'style_loop:for data_range in 5..proxy_data.len() {
+                             if proxy_data[data_range]=="->" {calc_bound=true;continue 'style_loop;}
+                             else if proxy_data[data_range]==":" || calc_bound ==false {
+                                 continue 'style_loop;
+                             }
+                             if calc_bound {
+                                 printed_js_data += &format!("document.getElementById({}).style.{}='{}';",proxy_data[3],proxy_data[data_range],proxy_data[data_range+2]);
+                                 calc_bound = false;
+                             }
+                         }
+
+                         println!("{}",&& proxy_data[3]);
+                     }
                  }
              }
              printed_js_data+=";";
+             element_serializer += 1;
          }
         //build file creation
         let file_path = PathBuf::from(project_name.to_string()).join("build.js");
