@@ -43,7 +43,7 @@ style >> custom "clickedButton" = padding : .5rem -> backgroundColor : skyblue -
 
 ## Building
 ```bash
-cargo run compile prod forms_creator 
+cargo run compile prod sample_project 
 ```
 
 ## Output
