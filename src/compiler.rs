@@ -66,6 +66,9 @@ pub fn compile_project(project_name: &String)->String{
                      printed_js_data += &format!("writeElement{}.appendChild(document.createTextNode({}));",&element_serializer,&proxy_text_data);
                      printed_js_data += &format!("root.appendChild(writeElement{})",&element_serializer);
                  }
+                 else if proxy_data[0]=="div" {
+                     printed_js_data += &format!("let divElement{}=document.createElement('{}');",&element_serializer,&proxy_data[0]);
+                 }
                      //buttons and other input elements
                  else if proxy_data[0]=="button" {
                      printed_js_data += &format!("let inputElement{} = document.createElement('{}');",&element_serializer,&proxy_data[0]);
