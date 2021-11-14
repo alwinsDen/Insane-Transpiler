@@ -68,6 +68,26 @@ pub fn compile_project(project_name: &String)->String{
                  }
                  else if proxy_data[0]=="div" {
                      printed_js_data += &format!("let divElement{}=document.createElement('{}');",&element_serializer,&proxy_data[0]);
+
+                     //expected elements within the Div clause
+                     let mut sub_element_create = 0;
+                     'div_looper: for text_data in 2..proxy_data.len() {
+                         if proxy_data[text_data]=="||" {
+                             let custom_id_tag = String::from(proxy_data[text_data+1]);
+                             if custom_id_tag!="" {
+                                 printed_js_data +=  &format!("divElement{}.id={};",&element_serializer,&custom_id_tag);
+                                 break 'div_looper;
+                             }
+                         }
+                         //to add elements either as id or as elements
+                         let created_element = &format!("let subElement{}=document.createElement('{}');",&sub_element_create,&proxy_data[text_data]);
+                         sub_element_create+=1;
+                         printed_js_data+=&format!("divElement{}.appendChild(subElement{})",&element_serializer,&sub_element_create)
+
+                     }
+
+                     //add the created div to the mainframe
+                     printed_js_data += &format!("root.appendChild(divElement{})",&element_serializer)
                  }
                      //buttons and other input elements
                  else if proxy_data[0]=="button" {
